@@ -1,0 +1,50 @@
+name: flop-testnet-observer
+
+services:
+  observer:
+    image: ghcr.io/flop-labs/flop-core/node-testnet:v0.1.486@sha256:811c84ccc5c49a5608da8d5aaef16f6b076b70b9b7bc26f7a292445c391711ea
+    container_name: flop-testnet-observer
+    restart: unless-stopped
+    stop_grace_period: 30s
+    entrypoint: [zkv-relay]
+    command:
+      - --chain
+      - /spec/chain.raw.json
+      - --base-path
+      - /data
+      - --listen-addr
+      - /ip4/0.0.0.0/tcp/30333
+      - --public-addr
+      - /ip4/${PUBLIC_IP:?Once scripts/prepare.sh ile PUBLIC_IP ayarlayin}/tcp/30333
+      - --rpc-port
+      - "9944"
+      - --rpc-external
+      - --rpc-methods
+      - safe
+      - --no-prometheus
+      - --no-telemetry
+      - --no-mdns
+      - --state-pruning
+      - archive
+      - --blocks-pruning
+      - archive
+    ports:
+      - "127.0.0.1:9944:9944/tcp"
+      - "0.0.0.0:30333:30333/tcp"
+    volumes:
+      - observer_data:/data
+      - type: bind
+        source: ./chain.raw.json
+        target: /spec/chain.raw.json
+        read_only: true
+        bind:
+          create_host_path: false
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  observer_data:
+    name: flop-testnet-observer-data
